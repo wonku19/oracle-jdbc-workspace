@@ -328,6 +328,7 @@ ORDER BY 2, 3 ASC, 4 ASC;
 형 변환 함수
 TO_CHAR(날짜|숫자, [포맷])
 - 날짜 또는 숫자형 데이터를 문자 타입으로 변환해서 반환한다
+- 포맷에서 FM을 붙여주면 공백을 제거해준다
 */
 SELECT TO_CHAR(1234, 'L999999') -- L은 현재 설정된 나라의 화폐 단위를 출력함
 FROM DUAL;
@@ -430,7 +431,7 @@ FROM EMPLOYEE;
 
 -- 사원명, 보너스포함 연봉(월급 + 월급*보너스) * 12
 SELECT EMP_NAME, TO_CHAR(SALARY, 'L999,999,999') 월급 , TO_CHAR(SALARY * 12, 'L999,999,999') 연봉, NVL(BONUS, 0) 보너스, TO_CHAR((SALARY + SALARY * NVL(BONUS, 0)) * 12, 'L999,999,999') 총수령액
-FROM EMPLOYEE
+FROM EMPLOYEE;
 
 -- 사원명, 부서코드 조회(부서코드가 NULL이면 '부서없음') 조회
 SELECT EMP_NAME, NVL(DEPT_CODE, '부서없음') 부서명
@@ -455,3 +456,122 @@ FROM DUAL;
 
 SELECT NULLIF('123', '456')
 FROM DUAL;
+
+/*
+선택 함수 : 여러가지 경우에 선택을 할 수 있는 기능을 제공하는 함수
+DECODE(컬럼|산술연산|함수식, 조건값1, 결과값1, 조건값2, 결과값2, ... , 결과값N)
+- 비교하고자 하는 값이 조건값과 일치할 경우 그에 해당하는 결과값을 반환해주는 함수
+*/
+
+-- 사번, 사원명, 주민번호, 성별(남, 여) 조회
+SELECT EMP_ID, EMP_NAME, EMP_NO, DECODE(SUBSTR(EMP_NO, 8, 1), 1, '남자', 2, '여자') 성별
+FROM EMPLOYEE;
+
+-- 사원명, 직급 코드, 기존 급여, 인상된 급여율을 조회하기
+-- 직급코드 J7 -> 급여율 10% 인상
+-- 직급코드 J6 -> 급여율 15% 인상
+-- 직급코드 J5 -> 급여율 20% 인상
+-- 나머지 직급은 급여를 5% 인상
+-- 정렬 : 직급코드 J1부터 / 인상된 급여가 높은 순서대로
+SELECT EMP_NAME 사원명, JOB_CODE 직급코드, SALARY 급여, DECODE(JOB_CODE, 'J7', SALARY * 1.1, 'J6', SALARY * 1.15, 'J5', SALARY * 1.2, SALARY * 1.05) "인상된 급여"
+FROM EMPLOYEE
+ORDER BY JOB_CODE, '인상된 급여' DESC;
+
+/*
+CASE WHEN 조건식1 THEN 결과값1 WHEN 조건식2 THEN 결과값2 .... ELSEL 결과값N END
+*/
+
+-- 사번, 사원명, 주민번호, 성별
+SELECT EMP_ID, EMP_NAME, EMP_NO, CASE WHEN SUBSTR(EMP_NO, 8, 1) = 1 THEN '남자' WHEN SUBSTR(EMP_NO, 8, 1) = 2 THEN '여자' ELSE '잘못된 주민번호 입니다.' END 성별
+FROM EMPLOYEE;
+
+-- 사원명, 급여, 급여 등급(1~4)
+-- 급여값이 500만원 초과 : 1등급 / 350~500 2등급 / 200~350 3등급 / 그외 4등급
+SELECT EMP_NAME 사원명, SALARY 급여, CASE WHEN SALARY > 5000000 THEN '1등급' 
+                                         WHEN SALARY > 3500000 THEN '2등급'  
+                                         WHEN SALARY > 2000000 THEN '3등급'
+                                         ELSE '4등급' END 급여등급
+FROM EMPLOYEE
+ORDER BY SALARY DESC;
+
+/*
+그룹함수
+- 대량의 데이터들로 집계나 통계같은 작업을 처리해야 하는 경우 사용되는 함수들
+- 모든 그룹 함수는 NULL값을 자동으로 제외하고 값이 있는 것들만 계산한다
+
+SUM(NUMBER)
+- 해당 컬럼 값들의 총 합계를 반환
+*/
+
+-- 전체 사원의 총 급여 합
+SELECT TO_CHAR(SUM(SALARY), 'FM999,999,999')
+FROM EMPLOYEE;
+
+-- 부서코드가 D5인 사원들의 총 연봉 합
+SELECT TO_CHAR(SUM(SALARY) * 12, 'FM999,999,999')
+FROM EMPLOYEE
+WHERE DEPT_CODE = 'D5';
+
+/*
+AVG(NUMBER)
+- 해당 컬럼값들의 평균값을 반환한다
+- 모든 그룹 함수는 NULL값을 제외 -> AVG 함수를 사용할 때 NVL 함수와 함께 사용하는것을 권장함
+*/
+
+-- 전체 사원의 평균 급여 조회
+SELECT TO_CHAR(AVG(SALARY), 'FM999,999,999') "평균급여"
+--SELECT ROUND(AVG(SALARY)) "평균급여"
+FROM EMPLOYEE;
+
+-- 보너스의 평균 구할때 NVL을 사용하지 않으면 0.21... 출력됨
+SELECT AVG(BONUS)
+FROM EMPLOYEE;
+
+-- 보너스의 평균을 구할떄 NVL을 사용하면 0.08 출력됨 
+-- NULL값이 있는 컬럼의 평균을 구할때는 NVL을 꼭 사용해야 정확한 값이 출력 가능하다
+SELECT AVG(NVL(BONUS, 0))
+FROM EMPLOYEE;
+
+/*
+MIN/MAX(모든타입의 컬럼)
+- MIN : 해당 컬럼 값들 중에 가장 작은 값을 반환
+- MAX : 해당 컬럼 값들 중에 가장 큰 값을 반환
+*/
+
+-- 가장 작은 값에 해당하는 사원명, 급여, 입사일
+-- 가장 큰 값에 해당하는 사원명, 급여, 입사일
+SELECT MIN(EMP_NAME), MIN(SALARY), MIN(HIRE_DATE), MAX(EMP_NAME), MAX(SALARY), MAX(HIRE_DATE)
+FROM EMPLOYEE;
+
+/*
+COUNT(*|컬럼|DISTINCT 컬럼)
+- 컬럼 또는 행의 개수를 세서 반환한다
+
+COUNT(*) : 조회 결과에 해당하는 모든 행 개수를 반환한다
+COUNT(컬럼) : 해당 컬럼값이 NULL이 아닌 행의 개수를 반환한다
+COUNT(DISTINCT 컬럼) : 해당 컬럼값의 중복을 제거한 행의 개수를 반환한다
+*/
+
+-- 전체 사원 수
+SELECT COUNT(*)
+FROM EMPLOYEE;
+
+-- 보너스를 받는 사원의 수
+SELECT COUNT(BONUS)
+FROM EMPLOYEE;
+
+-- 부서가 배치된 사원 수
+SELECT COUNT(DEPT_CODE)
+FROM EMPLOYEE;
+
+-- 현재 사원들이 속해있는 부서 수
+SELECT COUNT(DISTINCT DEPT_CODE)
+FROM EMPLOYEE;
+
+-- 현재 사원들이 속해있는 직급 수
+SELECT COUNT(DISTINCT JOB_CODE)
+FROM EMPLOYEE;
+
+-- 퇴사한 직원 수
+SELECT COUNT(ENT_DATE)
+FROM EMPLOYEE;
