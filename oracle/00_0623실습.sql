@@ -139,12 +139,79 @@ WHERE S.STUDENT_NO = G.STUDENT_NO
   
 -- 12. 예체능 계열 과목 중 과목 담당교수를 한 명도 배정받지 못한 과목을 찾아
 -- 그 과목 이름과 학과 이름을 출력하는 SQL 문장을 작성하시오.
--->> ANSI
-SELECT CLASS_NAME, DEPARTMENT_NAME
+-- 담당교수가 배정받지 못한 과목을 못찾겠슴 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
+SELECT CLASS_NAME, DEPARTMENT_NAME, CLASS_NO, PROFESSOR_NO
 FROM TB_CLASS
 JOIN TB_DEPARTMENT USING(DEPARTMENT_NO)
-WHERE CATEGORY = '예체능';
+JOIN TB_CLASS_PROFESSOR USING(CLASS_NO)
+WHERE CATEGORY = '예체능'
+ORDER BY PROFESSOR_NO NULLS FIRST;
 
-SELECT CLASS_NO, PROFESSOR_NO
-FROM TB_CLASS_PROFESSOR
-ORDER BY PROFESSOR_NO;
+-- 13.춘 기술대학교 서반아어학과 학생들의 지도교수를 게시하고자 한다. 학생이름과 지도교수 이름을 찾고 
+-- 만일 지도 교수가 없는 학생일 경우 “지도교수 미지정”으로 표시하도록 하는 SQL 문을 작성하시오. 
+-- 단,  출력헤더는  “학생이름”,  “지도교수”  로  표시하며  고학번  학생이  먼저  표시되도록 한다. 
+-->> ANSI
+SELECT STUDENT_NAME "학생이름", NVL(PROFESSOR_NAME, '지도교수 미지정') "지도교수"
+FROM TB_STUDENT
+LEFT JOIN TB_DEPARTMENT USING (DEPARTMENT_NO)
+LEFT JOIN TB_PROFESSOR ON (PROFESSOR_NO = COACH_PROFESSOR_NO)
+WHERE DEPARTMENT_NAME = '서반아어학과'
+ORDER BY STUDENT_NO;
+
+-->> 오라클 
+SELECT STUDENT_NAME "학생이름", NVL(PROFESSOR_NAME, '지도교수 미지정') "지도교수"
+FROM TB_STUDENT S, TB_DEPARTMENT D, TB_PROFESSOR P
+WHERE S.DEPARTMENT_NO = D.DEPARTMENT_NO (+)
+  AND S.COACH_PROFESSOR_NO = P.PROFESSOR_NO (+)
+  AND DEPARTMENT_NAME = '서반아어학과'
+  ORDER BY STUDENT_NO;
+ 
+-- 14. 휴학생이 아닌 학생 중 평점이 4.0 이상인 학생을 찾아 그 학생의 학번, 이름, 학과 이름, 평점을 출력하는 SQL 문을 작성하시오. 
+-- 단, 평점은 소수점 1자리까지만 반올림하여 표시한다. 
+-- WHERE 에서 왜 오류가 나는지 이해가 안되고 있슴 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
+SELECT STUDENT_NO "학번", STUDENT_NAME "이름", DEPARTMENT_NAME "학과이름", ABSENCE_YN, ROUND(AVG(NVL (POINT, 0)), 1)
+FROM TB_STUDENT
+JOIN TB_DEPARTMENT USING(DEPARTMENT_NO)
+JOIN TB_GRADE USING(STUDENT_NO)
+GROUP BY STUDENT_NO, STUDENT_NAME, DEPARTMENT_NAME, ABSENCE_YN
+WHERE ABSENCE_YN = N 
+  AND ROUND(AVG(NVL (POINT, 0)), 1) >= 4.0;
+ 
+-- 15. 환경조경학과 전공과목들의 과목 별 평점을 파악할 수 있는 SQL 문을 작성하시오. 단, 평점은 소수점 1자리까지만 반올림하여 표시한다. 
+-- WHERE 에서 왜 오류가 나는지 이해가 안되고 있슴 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
+SELECT CLASS_NO, CLASS_NAME, ROUND(AVG(NVL (POINT, 0)), 1)
+FROM TB_CLASS
+JOIN TB_DEPARTMENT USING(DEPARTMENT_NO)
+JOIN TB_GRADE USING(CLASS_NO)
+GROUP BY CLASS_NO
+WHERE DEPARTMENT_NAME = '환경조경학과'
+  AND CLASS_TYPE = '전공선택';
+ 
+-- 16. 춘 기술대학교에 다니고 있는 최경희 학생과 같은 과 학생들의 이름과 주소를 출력하는 SQL 문을 작성하시오. 
+SELECT STUDENT_NAME, STUDENT_ADDRESS
+FROM TB_STUDENT
+WHERE DEPARTMENT_NO = (SELECT DEPARTMENT_NO
+                      FROM TB_STUDENT
+                      WHERE STUDENT_NAME = '최경희');
+
+-- 17. 국어국문학과에서 총 평점이 가장 높은 학생의 이름과 학번을 표시하는 SQL 문을 작성하시오
+-- WHERE 에서 왜 오류가 나는지 이해가 안되고 있슴 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
+-- 평점 1등을 어떻게 표시해야 할지 감이 안옴 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
+SELECT STUDENT_NO, STUDENT_NAME, ROUND(AVG(NVL (POINT, 0)), 1)
+FROM TB_STUDENT
+JOIN TB_DEPARTMENT USING(DEPARTMENT_NO)
+JOIN TB_GRADE USING(STUDENT_NO)
+GROUP BY STUDENT_NO, STUDENT_NAME
+WHERE DEPARTMENT_NAME = '국어국문학과';
+
+-- 18. 춘 기술대학교의 “환경조경학과”가 속한 같은 계열 학과들의 학과 별 전공과목 평점을 파악하기 위한 적절한 SQL 문을 찾아내시오. 
+-- 단, 출력헤더는 “계열 학과명”, “전공평점”으로 표시되도록 하고, 평점은 소수점 한 자리까지만 반올림하여 표시되도록 한다. 
+-- WHERE 에서 왜 오류가 나는지 이해가 안되고 있슴 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
+SELECT DEPARTMENT_NAME "계열 학과명", ROUND(AVG(NVL (POINT, 0)), 1)
+FROM TB_DEPARTMENT
+JOIN TB_CLASS USING(DEPARTMENT_NO)
+JOIN TB_GRADE USING(CLASS_NO)
+GROUP BY DEPARTMENT_NAME
+WHERE CATEGORY = (SELECT CATEGORY
+                  FROM TB_DEPARTMENT
+                  WHERE DEPARTMENT_NAME = '환경조경학과');
