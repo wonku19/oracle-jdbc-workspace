@@ -405,3 +405,248 @@ FROM MEM_GRADE;
 
 SELECT *
 FROM MEM;
+
+-- ON DELETE CASCADE
+DROP TABLE MEM;
+
+CREATE TABLE MEM(
+    MEM_NO NUMBER PRIMARY KEY,
+    MEM_ID VARCHAR2(20) NOT NULL UNIQUE,
+    MEM_PWD VARCHAR2(20) NOT NULL,
+    MEM_NAME VARCHAR2(20) NOT NULL,
+    GENDER CHAR(3) CHECK(GENDER IN ('남', '여')),
+    PHONE VARCHAR2(13),
+    EMAIL VARCHAR2(50),
+    GRADE_ID NUMBER REFERENCES MEM_GRADE ON DELETE CASCADE
+);
+
+INSERT INTO MEM VALUES(1, 'user01', 'pass01', '홍길순', '여', null, null, null);
+INSERT INTO MEM VALUES(2, 'user02', 'pass02', '김말똥', null, null, null, 10);
+
+DELETE FROM MEM_GRADE;
+
+WHERE GRADE_CODE = 10;
+
+ROLLBACK;
+
+SELECT *
+FROM MEM_GRADE;
+
+SELECT *
+FROM MEM;
+
+/*
+DEFAULT 기본값
+- 제약조건 아님
+- 컬럼을 설정하지 않고 INSERT시 NULL이 아닌 기본값을 INSERT하조가 할 때 세팅해 둘 수 있는 값
+[표현식]
+컬럼명 자료형 DEFAULT 기본값 [제약조건]
+*/
+
+DROP TABLE MEMBER;
+
+CREATE TABLE MEMBER(
+    MEM_NO NUMBER PRIMARY KEY,
+    MEM_NAME VARCHAR2(20) NOT NULL,
+    MEM_AGE NUMBER,
+    HOBBY VARCHAR2(20) DEFAULT '없음',
+    ENROLL_DATE DATE DEFAULT SYSDATE
+);
+
+INSERT INTO MEMBER VALUES(1, '강길동', 20, '운동', '23/1/1');
+INSERT INTO MEMBER VALUES(2, '홍길순', NULL, NULL, NULL);
+INSERT INTO MEMBER VALUES(3, '김말똥', NULL, DEFAULT, DEFAULT);
+
+SELECT *
+FROM MEMBER;
+
+-- KH 계정으로! --
+/*
+서브쿼리를 이용한 테이블 생성
+- 테이블 복사 뜨는 개념으로 생각하면됨
+[표현식]
+CREATE TABLE 테이블명
+AS 서브쿼리;
+*/
+CREATE TABLE EMPLOYEE_COPY
+AS SELECT *
+FROM EMPLOYEE;
+
+SELECT * 
+FROM EMPLOYEE_COPY;
+
+CREATE TABLE EMPLOYEE_COPY2
+AS SELECT EMP_ID, EMP_NAME, SALARY, BONUS
+FROM EMPLOYEE
+WHERE 1 = 0; --> WHERE 1 = 0 을 사용하면 구조만 복사해오고 값은 복사하지 않는다
+
+SELECT *
+FROM EMPLOYEE_COPY2;
+
+CREATE TABLE EMPLOYEE_COPY3
+AS SELECT EMP_ID, EMP_NAME, SALARY, SALARY*12 "연봉"
+FROM EMPLOYEE;
+
+SELECT *
+FROM EMPLOYEE_COPY3;
+
+--- 실습문제 ---
+-- 01. 출판사들에 대한 데이터를 담기 위한 출판사 테이블 TB_PUBLISHER
+-- 1) 컬럼 : PUB_NO(출판사 번호) -- 기본 키
+--          PUB_NAME(출판사명) -- NOT NULL
+--          PHONE(출판사 전화번호)
+DROP TABLE TB_PUBLISHER;
+
+CREATE TABLE TB_PUBLISHER (
+    PUB_NO NUMBER PRIMARY KEY,
+    PUB_NAME VARCHAR2(20) NOT NULL,
+    PHONE VARCHAR2(20)
+);
+
+COMMENT ON COLUMN TB_PUBLISHER.PUB_NO IS '출판사 번호';
+COMMENT ON COLUMN TB_PUBLISHER.PUB_NAME IS '출판사명';
+COMMENT ON COLUMN TB_PUBLISHER.PHONE IS '출판사 전화번호';
+
+INSERT INTO TB_PUBLISHER VALUES(1, '인사이트', '02-1111-2222');
+INSERT INTO TB_PUBLISHER VALUES(2, '제이펍', '02-3333-4444');
+INSERT INTO TB_PUBLISHER VALUES(3, '한빛미디어', '02-5555-6666');
+
+SELECT *
+FROM TB_PUBLISHER;
+
+-- 02. 도서들에 대한 데이터를 담기 위한 도서 테이블 TB_BOOK
+-- 1) 컬럼 : BK_NO(도서번호) -- 기본 키
+--          BK_TITLE(도서명) -- NOT NULL
+--          BK_AUTHOR(저자명) -- NOT NULL
+--          BK_PRICE(가격)
+--          BK_PUB_NO(출판사 번호) -- 외래 키(TB_PUBLISHER 테이블을 참조하도록)
+--          이때 참조하고 있는 부모 데이터 삭제 시 자식 데이터도 삭제 되도록 옵션 지정
+
+DROP TABLE TB_BOOK;
+
+CREATE TABLE TB_BOOK (
+    BK_NO NUMBER PRIMARY KEY,
+    BK_TITLE VARCHAR2(50) NOT NULL,
+    BK_AUTHOR VARCHAR(20) NOT NULL,
+    BK_PRICE NUMBER,
+    BK_PUB_NO NUMBER REFERENCES TB_PUBLISHER(PUB_NO)ON DELETE CASCADE
+);
+
+INSERT INTO TB_BOOK VALUES(1, '프로그래머 열정을 말하다', '채드 파울러', 12600, 1);
+INSERT INTO TB_BOOK VALUES(2, '1일 1로그 100일 완성 IT 지식', '브라이언', 18000, 1);
+INSERT INTO TB_BOOK VALUES(3, '인스파이어드', '마티 케이건', 21600, 2);
+INSERT INTO TB_BOOK VALUES(4, '혼자 공부하는 얄팍한 코딩 지식', '고현민', 16200, 3);
+INSERT INTO TB_BOOK VALUES(5, '함께 자라기', '김창준', 11700, 1);
+
+COMMENT ON COLUMN TB_BOOK.BK_NO IS '도서번호';
+COMMENT ON COLUMN TB_BOOK.BK_TITLE IS '도서명';
+COMMENT ON COLUMN TB_BOOK.BK_AUTHOR IS '저자명';
+COMMENT ON COLUMN TB_BOOK.BK_PRICE IS '가격';
+COMMENT ON COLUMN TB_BOOK.BK_PUB_NO IS '출판사 번호';
+
+SELECT *
+FROM TB_BOOK;
+
+-- 03. 회원에 대한 데이터를 담기 위한 회원 테이블 TB_MEMBER
+-- 1) 컬럼 : MEMBER_NO(회원번호) -- 기본 키
+--          MEMBER_ID(아이디) -- 중복 금지
+--          MEMBER_PWD(비밀번호) -- NOT NULL
+--          MEMBER_NAME(회원명) -- NOT NULL
+--          GENDER(성별) -- 'M' 또는 'F'로 입력되도록 제한
+--          ADDRESS(주소) 
+--          PHONE(연락처) 
+--          STATUS(탈퇴 여부) -- 기본값으로 'N' 그리고 'Y' 혹은 'N'으로 입력되도록 제약조건
+--          ENROLL_DATE(가입일) -- 기본값으로 SYSDATE, NOT NULL
+
+DROP TABLE TB_MEMBER;
+
+CREATE TABLE TB_MEMBER (
+    MEMBER_NO NUMBER PRIMARY KEY,
+    MEMBER_ID VARCHAR2(20) UNIQUE,
+    MEMBER_PWD VARCHAR2(20) NOT NULL,
+    MEMBER_NAME VARCHAR2(10) NOT NULL,
+    GENDER CHAR(3) CHECK(GENDER IN ('M', 'F')),
+    ADDRESS VARCHAR2(50),
+    PHONE VARCHAR2(20),
+    STATUS CHAR(3) DEFAULT 'N' CHECK(STATUS IN ('Y', 'N')),
+    ENROLL_DATE DATE DEFAULT SYSDATE NOT NULL
+);
+
+COMMENT ON COLUMN TB_MEMBER.MEMBER_NO IS '회원번호';
+COMMENT ON COLUMN TB_MEMBER.MEMBER_ID IS '아이디';
+COMMENT ON COLUMN TB_MEMBER.MEMBER_PWD IS '비밀번호';
+COMMENT ON COLUMN TB_MEMBER.MEMBER_NAME IS '회원명';
+COMMENT ON COLUMN TB_MEMBER.GENDER IS '성별';
+COMMENT ON COLUMN TB_MEMBER.ADDRESS IS '주소';
+COMMENT ON COLUMN TB_MEMBER.PHONE IS '연락처';
+COMMENT ON COLUMN TB_MEMBER.STATUS IS '탈퇴 여부';
+COMMENT ON COLUMN TB_MEMBER.ENROLL_DATE IS '가입일';
+
+INSERT INTO TB_MEMBER VALUES(1, 'USER1', '1234', '유병재', 'M', '서울시 강남구', '010-1111-2222', NULL, '23/06/27');
+INSERT INTO TB_MEMBER VALUES(2, 'USER2', '1234', '김동현', 'M', '서울시 강남구', '010-3333-4444', NULL, '23/06/27');
+INSERT INTO TB_MEMBER VALUES(3, 'USER3', '1234', '강호동', 'F', '서울시 강남구', '010-5555-6666', NULL, '23/06/27');
+
+SELECT *
+FROM TB_MEMBER;
+
+-- 04. 도서를 대여한 회원에 대한 데이터를 담기 위한 대여 목록 테이블 TB_RENT
+-- 1) 컬럼 : RENT_NO(대여번호) -- 기본 키
+--          RENT_MEM_NO(대여 회원번호) -- 외래 키(TB_MEMBER와 참조)
+--                                      이때 부모 데이터 삭제 시 NULL 값이 되도록 옵션 설정
+--          RENT_BOOK_NO(대여 도서번호) -- 외래 키(TB_BOOK와 참조)
+--                                       이때 부모 데이터 삭제 시 NULL 값이 되도록 옵션 설정
+--          RENT_DATE(대여일) -- 기본값 SYSDAT
+
+DROP TABLE TB_RENT;
+
+CREATE TABLE TB_RENT (
+    RENT_NO NUMBER PRIMARY KEY,
+    RENT_MEM_NO NUMBER REFERENCES TB_MEMBER(MEMBER_NO) ON DELETE SET NULL,
+    RENT_BOOK_NO NUMBER REFERENCES TB_BOOK(BK_NO) ON DELETE SET NULL,
+    RENT_DATE DATE DEFAULT SYSDATE
+);
+
+COMMENT ON COLUMN TB_RENT.RENT_NO IS '대여번호';
+COMMENT ON COLUMN TB_RENT.RENT_MEM_NO IS '대여 회원번호';
+COMMENT ON COLUMN TB_RENT.RENT_BOOK_NO IS '대여 도서번호';
+COMMENT ON COLUMN TB_RENT.RENT_DATE IS '대여일';
+
+INSERT INTO TB_RENT VALUES(1, 1, 2, '23/06/27');
+INSERT INTO TB_RENT VALUES(2, 1, 3, '23/06/27');
+INSERT INTO TB_RENT VALUES(3, 2, 1, '23/06/27');
+INSERT INTO TB_RENT VALUES(4, 2, 2, '23/06/27');
+INSERT INTO TB_RENT VALUES(5, 1, 5, '23/06/27');
+
+SELECT *
+FROM TB_RENT;
+
+-- 05. 2번 도서를 대여한 회원의 이름, 아이디, 대여일, 반납 예정일(대여일 + 7일)을 조회하시오
+SELECT MEMBER_NAME, MEMBER_ID, RENT_BOOK_NO, RENT_DATE, RENT_DATE + 7
+FROM TB_MEMBER TM, TB_RENT TR
+WHERE TM.MEMBER_NO = TR.RENT_MEM_NO
+  AND RENT_BOOK_NO = 2;
+  
+-- 06. 회원번호가 1번인 회원이 대여한 도서들의 도서명, 출판사명, 대여일, 반납예정일을 조회하시오.
+SELECT BK_TITLE, PUB_NAME, RENT_DATE, RENT_DATE + 7
+FROM TB_RENT TR
+JOIN TB_BOOK TB ON (TR.RENT_BOOK_NO = TB.BK_NO)
+JOIN TB_PUBLISHER TP ON (TB.BK_PUB_NO = TP.PUB_NO)
+WHERE RENT_MEM_NO = 1;
+
+/*
+DB 모델링 작업 순서
+    1. 개념적 모델링
+        - 엔티티 추출
+        - 엔티티 간의 관계설정
+    2. 논리적 모델링
+        - 속성 추출
+        - 정규화 작업(1, 2, 3) -- 역정규화
+    3. 물리적 모델링
+        - 테이블 실질적으로 작성
+    * 정규화(Normalization)
+    - 불필요한 데이터의 중복을 제거하여 데이터모델을 구조화하는 것
+    - 효율적인 자료 저장 및 데이터 무결성을 보장하고 오류를 최소화하여 안정성을 보장하기 위해 적용
+    제 1 정규화 : 복수의 속성값을 갖는 속성을 분리
+    제 2 정규화 : 주 식별자에 종속되지 않는 속성을 분리
+    제 3 정규화 : 속성에 종속적인 속성을 제거
+*/
