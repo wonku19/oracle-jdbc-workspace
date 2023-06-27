@@ -11,15 +11,9 @@ FROM TB_PROFESSOR
 WHERE LENGTH(PROFESSOR_NAME) != 3;
 
 -- 3. 남자 교수들의 이름, 나이를 조회하고 이때 나이가 적은사람이 앞으로 오도록
--- SELECT 구문이 지저분함 ㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜ
--- 3번 문제는 EXTRACT, SUBSTR 만으로도 풀 수 있는 문제! 생년월일을 전부 다 생각한다면 CASE~ 이걸로 조건 걸면 되구요
-SELECT PROFESSOR_NAME "교수이름", TO_CHAR(SYSDATE, 'YYYY') - (SUBSTR(PROFESSOR_SSN, 1, INSTR(PROFESSOR_SSN, '-')-5)+1900) "나이"
+SELECT PROFESSOR_NAME "교수이름", EXTRACT(YEAR FROM SYSDATE)-1900 - SUBSTR(PROFESSOR_SSN,1,2) "나이"
 FROM TB_PROFESSOR
-WHERE SUBSTR(PROFESSOR_SSN, 8, 1) = 1
 ORDER BY PROFESSOR_SSN DESC;
-
-ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD';
-ALTER SESSION SET NLS_DATE_FORMAT = 'YYYYMM';
 
 SELECT PROFESSOR_NAME "교수이름", FLOOR(MONTHS_BETWEEN(SYSDATE, TO_DATE((SUBSTR(PROFESSOR_SSN, 1, INSTR(PROFESSOR_SSN, '-')-3)+190000), 'YYYYMM')) / 12) "나이"
 FROM TB_PROFESSOR
@@ -31,8 +25,6 @@ SELECT SUBSTR(PROFESSOR_NAME, 2, 3) "이름"
 FROM TB_PROFESSOR;
 
 -- 5. 재수생 입학자의 학번, 이름 조회하기
--- WHERE 구문이 지저분함 ㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜ
--- 혹시나 더 줄이고 싶다면 EXTRACT 만으로 풀 수 있습니다
 SELECT STUDENT_NO, STUDENT_NAME
 FROM TB_STUDENT
 WHERE EXTRACT(YEAR FROM ENTRANCE_DATE) - (SUBSTR(STUDENT_SSN, 1, INSTR(STUDENT_SSN, '-')-5) + 1900) > 19;
@@ -83,19 +75,15 @@ FROM TB_STUDENT
 WHERE COACH_PROFESSOR_NO IS NULL;
 
 -- 12. 김고운 학생의 년도별 평점 구하기
--- SELECT 문이 지저분함 ㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜ
--- 굳이 TO_CHAR, TO_DATE를 할 필요가 없습니다! 아래에 다른 쿼리문 잘하셨음!
-SELECT TO_CHAR(TO_DATE(TERM_NO, 'YYYYMM'), 'YYYY') "년도", ROUND(AVG(NVL(POINT, 0)), 1) "년도 별 평점"
+SELECT SUBSTR(TERM_NO, 1, 4) "년도", ROUND(AVG(NVL(POINT, 0)), 1) "년도 별 평점"
 FROM TB_GRADE
 WHERE STUDENT_NO = 'A112113'
-GROUP BY TO_CHAR(TO_DATE(TERM_NO, 'YYYYMM'), 'YYYY')
-ORDER BY TO_CHAR(TO_DATE(TERM_NO, 'YYYYMM'), 'YYYY');
+GROUP BY SUBSTR(TERM_NO, 1, 4)
+ORDER BY SUBSTR(TERM_NO, 1, 4);
 
 -- 13. 학과별 휴학생 수 학과번호와 휴학생 수를 조회하기 
--- 0이 안나옴 ㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜ
-SELECT DEPARTMENT_NO "학과 코드명", COUNT(ABSENCE_YN) "휴학생 수"
+SELECT DEPARTMENT_NO "학과 코드명", COUNT(DECODE(ABSENCE_YN, 'Y', 'Y')) "휴학생 수"
 FROM TB_STUDENT
-WHERE ABSENCE_YN = 'Y'
 GROUP BY DEPARTMENT_NO
 ORDER BY DEPARTMENT_NO;
 
@@ -107,11 +95,7 @@ GROUP BY STUDENT_NAME
 ORDER BY STUDENT_NAME;
 
 -- 학번 A112113 김고운의 년도, 학기 별 평점과 년도 별 누적 평점, 총 평점을 조회하기 (단, 평점은 소수점 1 자리까지만 반올림하여 표시한다.
--- 학기에서 01학기로 표시가 안됨 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ
--- SELECT 문이 지저분해서 ROLLUP 이 안돔 ㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜㅜ
--- 조건을 생각하셔야 할 거에요 힌트를 드리자면 COUNT 안에서도 함수식을 쓸 수 있다는 것
-SELECT EXTRACT(YEAR FROM TO_DATE(TERM_NO, 'YYYYMM')) "년도", EXTRACT(MONTH FROM TO_DATE(TERM_NO, 'YYYYMM')) "학기", ROUND(AVG(NVL(POINT, 0)), 1)
-FROM TB_GRADE
-WHERE STUDENT_NO = 'A112113'
-GROUP BY ROLLUP(TERM_NO)
-ORDER BY TERM_NO;
+SELECT NVL(SUBSTR(TERM_NO, 1, 4), ' ') 년도, NVL(SUBSTR(TERM_NO, 5, 2), ' ') 학기, ROUND(AVG(POINT), 1) 평점 
+FROM TB_GRADE 
+WHERE STUDENT_NO = 'A112113' 
+GROUP BY ROLLUP (SUBSTR(TERM_NO, 1, 4), SUBSTR(TERM_NO, 5, 2));
