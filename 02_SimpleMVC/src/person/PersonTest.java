@@ -23,7 +23,7 @@ public class PersonTest {
 			e.printStackTrace();
 		}
 	}
-	
+		
 	// 고정적인 반복 -- 디비연결, 자원 반납 을 메서드로 정의하고 필요 시 메소드 호출
 	public Connection getConnect() throws SQLException {
 		Connection conn = DriverManager.getConnection(ServerInfo.URL, ServerInfo.USER, ServerInfo.PASSWORD);
