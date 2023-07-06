@@ -3,7 +3,7 @@ package com.kh.model.vo;
 import java.util.Date;
 
 public class Member {
-
+	
 	private int memberNo;
 	private String memberId;
 	private String memberPwd;
@@ -11,11 +11,16 @@ public class Member {
 	private char status;
 	private Date enrollDate;
 	
+	public Member() {}
+	
 	public Member(String id, String password, String name) {
+		this.memberId = id;
+		this.memberPwd = password;
+		this.memberName = name;
 	}
 
-	public Member() {
-		// TODO Auto-generated constructor stub
+	public Member(int memberNo) {
+		this.memberNo = memberNo;
 	}
 
 	public int getMemberNo() {
@@ -65,7 +70,11 @@ public class Member {
 	public void setEnrollDate(Date enrollDate) {
 		this.enrollDate = enrollDate;
 	}
-	
-	
+
+	@Override
+	public String toString() {
+		return "Member [memberNo=" + memberNo + ", memberId=" + memberId + ", memberPwd=" + memberPwd + ", memberName="
+				+ memberName + ", status=" + status + ", enrollDate=" + enrollDate + "]";
+	}
 	
 }

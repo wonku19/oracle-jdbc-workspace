@@ -8,6 +8,21 @@ public class Rent {
 	private Member member;
 	private Book book;
 	private Date rentDate;
+	
+	public Rent() {}
+	
+	public Rent(int rentNo, Member member, Book book, Date rentDate) {
+		this.rentNo = rentNo;
+		this.member = member;
+		this.book = book;
+		this.rentDate = rentDate;
+	}
+
+	public Rent(Member member, Book book) {
+		this.member = member;
+		this.book = book;
+	}
+
 	public int getRentNo() {
 		return rentNo;
 	}
@@ -33,7 +48,9 @@ public class Rent {
 		this.rentDate = rentDate;
 	}
 	
-	
+	@Override
+	public String toString() {
+		return "Rent [rentNo=" + rentNo + ", member=" + member + ", book=" + book + ", rentDate=" + rentDate + "]";
+	}
 
 }
-;
