@@ -57,3 +57,11 @@ insert into userinfo values('member','member');
 insert into userinfo values('admin','admin');
 commit;
 
+-- 09/13 시험용 테이블
+CREATE TABLE MEMBER(
+MEMBER_ID VARCHAR2(30) PRIMARY KEY,
+MEMBER_PWD VARCHAR2(100) NOT NULL,
+MEMBER_NM VARCHAR2(15) NOT NULL,
+MEMBER_ENROLL_DT DATE DEFAULT SYSDATE
+);
+INSERT INTO MEMBER VALUES('user01', 'pass01', '홍길동', DEFAULT);
